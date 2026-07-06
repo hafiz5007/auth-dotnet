@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AuthReference.Domain</RootNamespace>
+    <AssemblyName>AuthReference.Domain</AssemblyName>
+    <!--
+      Domain has zero external dependencies. That is a deliberate architectural
+      constraint: it forces the layer above (Application) to depend on Domain,
+      and prevents anyone from sneaking a framework type into an entity.
+      If you ever feel like adding a PackageReference here, don't.
+    -->
+  </PropertyGroup>
+
+</Project>
