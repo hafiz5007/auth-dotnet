@@ -1,6 +1,6 @@
 # auth-reference-dotnet
 
-A .NET 8 identity provider + resource server built layer-by-layer following Clean Architecture. Each layer ships as its own commit — read the git history to see the shape of the refactor. Target end-state: standards-compliant OAuth 2.0 / OIDC (via OpenIddict) with production-shaped operational scaffolding — token-version revocation, refresh-token rotation with reuse detection, structured logging, real health checks, named per-endpoint rate limits, background retention.
+A .NET 10 identity provider + resource server built layer-by-layer following Clean Architecture. Each layer ships as its own commit — read the git history to see the shape of the refactor. Target end-state: standards-compliant OAuth 2.0 / OIDC (via OpenIddict) with production-shaped operational scaffolding — token-version revocation, refresh-token rotation with reuse detection, structured logging, real health checks, named per-endpoint rate limits, background retention.
 
 **Status: Phase 2 of 5 — Application layer + CQRS.**
 
