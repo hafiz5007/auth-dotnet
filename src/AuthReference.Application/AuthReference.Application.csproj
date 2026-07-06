@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AuthReference.Application</RootNamespace>
+    <AssemblyName>AuthReference.Application</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      MediatR gives us CQRS-lite: one request record per use case, one handler
+      per request, in-process publish/subscribe for domain events. Version 12
+      changed licensing — the free tier is fine for portfolio / non-commercial
+      use. Any commercial use of this pattern would go through a licence.
+    -->
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="FluentValidation" Version="11.10.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AuthReference.Domain\AuthReference.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
