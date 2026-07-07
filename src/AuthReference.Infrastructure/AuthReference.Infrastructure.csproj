@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AuthReference.Infrastructure</RootNamespace>
+    <AssemblyName>AuthReference.Infrastructure</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- EF Core 10 + Npgsql for Postgres. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <!--
+      OpenIddict — Core is enough for Phase 3 (it registers the entity types
+      and managers that the client seeder needs). Server + Validation packages
+      arrive in Phase 4 alongside the Server host that wires the /connect/*
+      endpoints. Splitting the phases this way keeps Infrastructure independent
+      of ASP.NET Core hosting concerns.
+    -->
+    <PackageReference Include="OpenIddict.Core" Version="5.7.2" />
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="5.7.2" />
+
+    <!-- JWT signing / validation used by JwtTokenIssuer. -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
+
+    <!-- Framework logging + DI abstractions. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AuthReference.Application\AuthReference.Application.csproj" />
+  </ItemGroup>
+
+</Project>
