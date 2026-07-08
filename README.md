@@ -2,7 +2,7 @@
 
 A .NET 10 identity provider + resource server built layer-by-layer following Clean Architecture. Each layer ships as its own commit — read the git history to see the shape of the refactor. Target end-state: standards-compliant OAuth 2.0 / OIDC (via OpenIddict) with production-shaped operational scaffolding — token-version revocation, refresh-token rotation with reuse detection, structured logging, real health checks, named per-endpoint rate limits, background retention.
 
-**Status: Phase 3 of 5 — Infrastructure layer (persistence + OpenIddict core).**
+**Status: Phase 4 of 5 — Server host + operational hardening.**
 
 ## Phases
 
@@ -11,8 +11,8 @@ A .NET 10 identity provider + resource server built layer-by-layer following Cle
 | 1 — Domain | Entities, value objects, service interfaces, domain events. Zero framework deps. | done |
 | 2 — Application | MediatR CQRS command handlers over the domain interfaces, FluentValidation pipeline, unit tests with in-memory fakes. | done |
 | 3 — Infrastructure | Postgres + EF Core, OpenIddict core + client seeder, PBKDF2 password hashing, JWT issuance, refresh-token rotation with reuse detection. Migration guidance for local generation. | done |
-| 4 — Server (IdP) | Minimal-API endpoints, correlation-id middleware, named rate limits, payload caps, Redis token-version store, retention worker. | pending |
-| 5 — Resource API + tests + Docker + README | Token-version enforcement on the resource server, handler + integration tests, docker-compose with Postgres + Redis, expanded README. | pending |
+| 4 — Server (IdP) | REPR-style minimal-API endpoints, correlation-id middleware + Serilog PII redaction, named rate limits, payload caps, Redis-backed token-version store with JWT `tv`-claim enforcement, daily retention worker. | done |
+| 5 — Resource API + tests + Docker + README | Standalone resource-server sample, integration tests, docker-compose with Postgres + Redis, expanded README + architecture diagram. | pending |
 
 See [`docs/comparison-and-refactor.md`](docs/comparison-and-refactor.md) for the full architectural rationale — why Clean Architecture, what patterns the design borrows from a production auth service, and what it deliberately does *not* borrow.
 
@@ -54,6 +54,24 @@ The Application layer's only new dependencies are **MediatR 12** and **FluentVal
 - **`AddAuthReferenceInfrastructure()`** — one DI call the Server host will make in Phase 4.
 
 Migrations are generated locally (see `src/AuthReference.Infrastructure/Persistence/Migrations/README.md`) so EF Core's design-time services produce a matching `AppDbContextModelSnapshot`. Committing a hand-forged snapshot is fragile and would block future migrations.
+
+## What Phase 4 gives you
+
+`AuthReference.Server` — the runnable ASP.NET Core 10 host.
+
+- **REPR-style minimal-API endpoints** — one file per verb+path. `POST /api/auth/login`, `/register`, `/refresh`, `/change-password`, `/admin/revoke-all`. Endpoints are 10-line adapters that construct a `MediatR` command and shape the response. All the logic lives in the Application handlers, so integration tests don't need a live server to exercise it.
+- **Correlation IDs everywhere.** `CorrelationIdMiddleware` extracts or mints `X-Correlation-Id`, echoes it back on the response, and pushes it into the Serilog log context so every log line for a request is tagged with it.
+- **PII log redaction.** A Serilog enricher scrubs `password`, `refresh_token`, `client_secret`, `access_token` values and long-shaped JWTs out of every log event's string properties. Belt-and-braces on top of the primary defence of not logging secrets to begin with.
+- **Named per-endpoint rate limits** — `auth-login` (5/min), `auth-register` (3/hr), `auth-refresh` (60/min). Partitioned by client IP. Same shape as MM.Auth's `auth-login` policy.
+- **Payload-size caps** — 2-16 KB per endpoint. A 50 MB POST body will never deserialise before validation runs.
+- **Token-version enforcement on every validated JWT.** `JwtBearerEvents.OnTokenValidated` reads the `tv` claim off the presented token, compares it against the value in `ITokenVersionStore`, and fails the request if the token is stale. The cache is cold-repopulated from Postgres on first miss.
+- **Redis-backed `TokenVersionStore`.** Registered automatically when `AuthReference:Redis:ConnectionString` is set; a short (60s) TTL keeps stale reads bounded. Password change and admin revoke-all invalidate the key so the next check reads the fresh version.
+- **Background retention worker** — daily sweep that hard-deletes refresh tokens past the retention grace and audit rows past the retention window. Configurable via `AuthReference:Retention`.
+- **Real health checks** — `/health/live` (process only) and `/health/ready` (Postgres via `AddDbContextCheck<AppDbContext>` + Redis ping when configured). K8s can wire these directly.
+
+**JWT signing.** `JwtTokenIssuer` uses HS256 with a symmetric key from `AuthReference:Jwt:SigningKey`. The bearer-validation middleware reads the same key so tokens issued and validated by this host stay consistent. Production would flip to RS256 with the private key in Key Vault and JWKS publishing.
+
+**Distinct from MM.Auth** — same architectural pattern and same operational primitives, but with a different stack (Postgres over SQL Server, minimal APIs over broader MVC, StackExchange.Redis directly instead of via a shared common package, no RabbitMQ/gRPC dependencies). The Phase 4 hardening — rate limits, payload caps, correlation IDs, PII redaction, real health checks — mirrors production patterns from MM.Auth without copying the domain-specific pieces (Membership, company gRPC lookup, legacy password hasher).
 
 ## Build
 

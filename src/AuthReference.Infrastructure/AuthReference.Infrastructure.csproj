@@ -32,6 +32,12 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
 
+    <!-- Redis token-version store + StackExchange.Redis health check. -->
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+
+    <!-- BackgroundService base type for TokenRetentionWorker. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+
     <!-- Framework logging + DI abstractions. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />

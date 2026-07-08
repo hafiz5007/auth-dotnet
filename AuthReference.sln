@@ -1,12 +1,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-# Phase 3 — Domain + Application + Infrastructure + Application.Tests.
-# Server / Api projects are added in Phases 4 and 5.
+# Phase 4 — Domain + Application + Infrastructure + Server + Application.Tests.
+# Api project is added in Phase 5.
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthReference.Domain", "src\AuthReference.Domain\AuthReference.Domain.csproj", "{3A2B3C4D-0001-0000-0000-000000000001}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthReference.Application", "src\AuthReference.Application\AuthReference.Application.csproj", "{3A2B3C4D-0002-0000-0000-000000000002}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthReference.Infrastructure", "src\AuthReference.Infrastructure\AuthReference.Infrastructure.csproj", "{3A2B3C4D-0004-0000-0000-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthReference.Server", "src\AuthReference.Server\AuthReference.Server.csproj", "{3A2B3C4D-0005-0000-0000-000000000005}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthReference.Application.Tests", "tests\AuthReference.Application.Tests\AuthReference.Application.Tests.csproj", "{3A2B3C4D-0003-0000-0000-000000000003}"
 EndProject
@@ -28,6 +30,10 @@ Global
 		{3A2B3C4D-0004-0000-0000-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A2B3C4D-0004-0000-0000-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A2B3C4D-0004-0000-0000-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A2B3C4D-0005-0000-0000-000000000005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A2B3C4D-0005-0000-0000-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A2B3C4D-0005-0000-0000-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A2B3C4D-0005-0000-0000-000000000005}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3A2B3C4D-0003-0000-0000-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3A2B3C4D-0003-0000-0000-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A2B3C4D-0003-0000-0000-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU

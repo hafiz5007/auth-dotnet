@@ -12,6 +12,8 @@ public class InfrastructureOptions
     public DatabaseOptions Database { get; set; } = new();
     public JwtOptions Jwt { get; set; } = new();
     public PasswordOptions Password { get; set; } = new();
+    public RedisOptions Redis { get; set; } = new();
+    public RetentionOptions Retention { get; set; } = new();
 }
 
 public class DatabaseOptions
@@ -42,4 +44,28 @@ public class PasswordOptions
 {
     /// <summary>PBKDF2 iteration count. 600k is the current OWASP guideline (2023+).</summary>
     public int Pbkdf2Iterations { get; set; } = 600_000;
+}
+
+public class RedisOptions
+{
+    /// <summary>StackExchange.Redis connection string, e.g. "localhost:6379".</summary>
+    public string? ConnectionString { get; set; }
+
+    /// <summary>Namespace prefix for every key this service writes. Isolates it from co-tenants.</summary>
+    public string KeyPrefix { get; set; } = "auth-ref:";
+
+    /// <summary>TTL for cached TokenVersion entries. Short — 60s balances freshness against DB load.</summary>
+    public int TokenVersionTtlSeconds { get; set; } = 60;
+}
+
+public class RetentionOptions
+{
+    /// <summary>How often the retention worker sweeps. Defaults to once a day.</summary>
+    public TimeSpan SweepInterval { get; set; } = TimeSpan.FromHours(24);
+
+    /// <summary>Refresh-token retention window past expiry — keeps forensics available briefly.</summary>
+    public TimeSpan RefreshTokenGrace { get; set; } = TimeSpan.FromDays(7);
+
+    /// <summary>Audit-event retention window. FCA-style regulated services keep this longer.</summary>
+    public TimeSpan AuditRetention { get; set; } = TimeSpan.FromDays(180);
 }

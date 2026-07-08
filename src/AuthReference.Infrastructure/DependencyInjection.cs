@@ -4,9 +4,11 @@ using AuthReference.Infrastructure.Configuration;
 using AuthReference.Infrastructure.OpenIddict;
 using AuthReference.Infrastructure.Persistence;
 using AuthReference.Infrastructure.Services;
+using AuthReference.Infrastructure.Workers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace AuthReference.Infrastructure;
 
@@ -57,7 +59,20 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordAuthenticator, Pbkdf2PasswordAuthenticator>();
         services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
-        services.AddSingleton<ITokenVersionStore, InMemoryTokenVersionStore>();     // Redis-backed in Phase 4
+
+        // Token-version store: Redis when a connection string is configured, in-memory otherwise.
+        // Multi-node deployments MUST configure Redis — otherwise revocation won't propagate
+        // between the replica that bumped TokenVersion and the replica that validates tokens.
+        var redisConn = configuration[$"{InfrastructureOptions.SectionName}:Redis:ConnectionString"];
+        if (!string.IsNullOrWhiteSpace(redisConn))
+        {
+            services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
+            services.AddSingleton<ITokenVersionStore, RedisTokenVersionStore>();
+        }
+        else
+        {
+            services.AddSingleton<ITokenVersionStore, InMemoryTokenVersionStore>();
+        }
 
         services.AddScoped<IUserLookup, EfUserLookup>();
         services.AddScoped<IUserRegistrar, EfUserRegistrar>();
@@ -66,9 +81,13 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenStore, PostgresRefreshTokenStore>();
 
         // --- Application abstractions that Infrastructure fills ---
-        // IRequestContext is populated by the API-layer middleware in Phase 4.
-        // Registering a fallback here means test harnesses without HTTP still resolve.
+        // A HeadlessRequestContext is registered as a last-resort fallback for
+        // background workers + integration tests. The Server host overrides
+        // this registration with an HttpContext-backed implementation.
         services.AddScoped<IRequestContext, HeadlessRequestContext>();
+
+        // --- Background workers ---
+        services.AddHostedService<TokenRetentionWorker>();
 
         return services;
     }
