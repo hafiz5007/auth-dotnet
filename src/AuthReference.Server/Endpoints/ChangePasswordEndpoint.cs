@@ -27,7 +27,7 @@ public static class ChangePasswordEndpoint
             .RequireAuthorization()
             .WithName("ChangePassword")
             .WithSummary("Authenticated password change — bumps TokenVersion")
-            .WithMetadata(new Microsoft.AspNetCore.Http.Metadata.RequestSizeLimitMetadata(MaxPayloadBytes));
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(MaxPayloadBytes));
 
         return app;
     }

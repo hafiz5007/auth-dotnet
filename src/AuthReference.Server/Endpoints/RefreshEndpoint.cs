@@ -24,7 +24,7 @@ public static class RefreshEndpoint
             .AllowAnonymous()
             .WithName("Refresh")
             .WithSummary("Rotate a refresh token — with reuse detection")
-            .WithMetadata(new Microsoft.AspNetCore.Http.Metadata.RequestSizeLimitMetadata(MaxPayloadBytes))
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(MaxPayloadBytes))
             .RequireRateLimiting(AuthRateLimitPolicies.Refresh);
 
         return app;

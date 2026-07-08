@@ -18,7 +18,7 @@ public static class RegisterEndpoint
             .AllowAnonymous()
             .WithName("Register")
             .WithSummary("Create a user and issue the first token pair")
-            .WithMetadata(new Microsoft.AspNetCore.Http.Metadata.RequestSizeLimitMetadata(MaxPayloadBytes))
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(MaxPayloadBytes))
             .RequireRateLimiting(AuthRateLimitPolicies.Register);
 
         return app;

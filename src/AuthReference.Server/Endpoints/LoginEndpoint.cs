@@ -21,7 +21,7 @@ public static class LoginEndpoint
             .AllowAnonymous()
             .WithName("Login")
             .WithSummary("Exchange email + password for a token pair")
-            .WithMetadata(new Microsoft.AspNetCore.Http.Metadata.RequestSizeLimitMetadata(MaxPayloadBytes))
+            .WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(MaxPayloadBytes))
             .RequireRateLimiting(AuthRateLimitPolicies.Login);
 
         return app;
