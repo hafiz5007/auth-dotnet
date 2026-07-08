@@ -1,8 +1,8 @@
 using AuthReference.Application;
 using AuthReference.Application.Abstractions;
 using AuthReference.Infrastructure;
+using AuthReference.Infrastructure.Authentication;
 using AuthReference.Infrastructure.Persistence;
-using AuthReference.Server.Auth;
 using AuthReference.Server.Endpoints;
 using AuthReference.Server.HealthChecks;
 using AuthReference.Server.Logging;
@@ -10,7 +10,6 @@ using AuthReference.Server.Middleware;
 using AuthReference.Server.RateLimiting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
-using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 

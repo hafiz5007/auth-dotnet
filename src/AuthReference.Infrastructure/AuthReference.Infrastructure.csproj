@@ -28,7 +28,14 @@
     <PackageReference Include="OpenIddict.Core" Version="5.7.2" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="5.7.2" />
 
-    <!-- JWT signing / validation used by JwtTokenIssuer. -->
+    <!--
+      JWT signing (JwtTokenIssuer) + bearer validation (JwtBearerConfiguration).
+      The Authentication.JwtBearer package pulls in ASP.NET Core — Infrastructure
+      is normally kept ASP.NET-free, but JWT validation is genuinely shared
+      between Server (IdP) and Api (resource server) so this is the pragmatic
+      home. Both hosts call services.AddAuthReferenceJwtBearer() from here.
+    -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
 

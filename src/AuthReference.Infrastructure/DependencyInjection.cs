@@ -15,13 +15,58 @@ namespace AuthReference.Infrastructure;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Wires every infrastructure concern in one call. Server and Api hosts do:
-    /// <code>
-    /// services.AddAuthReferenceApplication();
-    /// services.AddAuthReferenceInfrastructure(builder.Configuration);
-    /// </code>
+    /// Full stack for the IdP: DbContext, OpenIddict, every domain-interface
+    /// implementation, retention worker, HeadlessRequestContext fallback.
+    /// Server (Phase 4) uses this.
     /// </summary>
     public static IServiceCollection AddAuthReferenceInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddAuthReferenceCore(configuration);
+
+        // --- OpenIddict core (managers + entity types) ---
+        services.AddOpenIddict()
+            .AddCore(o => o.UseEntityFrameworkCore().UseDbContext<AppDbContext>());
+
+        // --- Full domain-interface implementations ---
+        services.AddSingleton<IPasswordAuthenticator, Pbkdf2PasswordAuthenticator>();
+        services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
+
+        services.AddScoped<IUserRegistrar, EfUserRegistrar>();
+        services.AddScoped<IUserActivityRecorder, EfUserActivityRecorder>();
+        services.AddScoped<IPasswordChanger, EfPasswordChanger>();
+        services.AddScoped<IRefreshTokenStore, PostgresRefreshTokenStore>();
+
+        // --- Background workers ---
+        services.AddHostedService<TokenRetentionWorker>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Minimal stack for a resource server: just what's needed to validate
+    /// tokens issued by the IdP. Registers the DbContext (for the tv-claim
+    /// cold-cache fallback), the TokenVersionStore (Redis when configured),
+    /// the read-only user lookup, and the clock. Does NOT register the
+    /// issuer, password hasher, write-side stores, OpenIddict, or the
+    /// retention worker.
+    /// Api (Phase 5) uses this.
+    /// </summary>
+    public static IServiceCollection AddAuthReferenceValidation(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddAuthReferenceCore(configuration);
+        services.AddScoped<IUserLookup, EfUserLookup>();          // used by any per-request auth introspection
+        return services;
+    }
+
+    /// <summary>
+    /// Shared foundation both variants build on — options binding, DbContext,
+    /// Redis or in-memory TokenVersionStore, clock, HeadlessRequestContext fallback.
+    /// </summary>
+    private static IServiceCollection AddAuthReferenceCore(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -29,8 +74,7 @@ public static class DependencyInjection
         services.Configure<InfrastructureOptions>(configuration.GetSection(InfrastructureOptions.SectionName));
         services.Configure<OpenIddictClientOptions>(configuration.GetSection(OpenIddictClientOptions.SectionName));
 
-        // Fail fast if the connection string is missing — a silent fallback would
-        // land production writes on the wrong database (see MM.Auth AH-4 comment).
+        // Fail fast if the connection string is missing.
         var connectionString = configuration[$"{InfrastructureOptions.SectionName}:Database:ConnectionString"]
             ?? throw new InvalidOperationException(
                 $"Missing configuration: {InfrastructureOptions.SectionName}:Database:ConnectionString");
@@ -45,24 +89,14 @@ public static class DependencyInjection
                 npg.CommandTimeout(configuration.GetValue($"{InfrastructureOptions.SectionName}:Database:CommandTimeoutSeconds", 30));
             });
 
-            // Hook OpenIddict's entity sets into our DbContext. Running
-            // `dotnet ef migrations add …` after this is registered will
-            // include the OpenIddict tables alongside our own.
-            options.UseOpenIddict();
+            options.UseOpenIddict();       // shared across both variants — resource server may still enrich claims from OpenIddict apps
         });
 
-        // --- OpenIddict core (managers + entity types) ---
-        services.AddOpenIddict()
-            .AddCore(o => o.UseEntityFrameworkCore().UseDbContext<AppDbContext>());
-
-        // --- Domain-interface implementations ---
+        // --- Shared services ---
         services.AddSingleton<IClock, SystemClock>();
-        services.AddSingleton<IPasswordAuthenticator, Pbkdf2PasswordAuthenticator>();
-        services.AddSingleton<ITokenIssuer, JwtTokenIssuer>();
+        services.AddScoped<IUserLookup, EfUserLookup>();
 
-        // Token-version store: Redis when a connection string is configured, in-memory otherwise.
-        // Multi-node deployments MUST configure Redis — otherwise revocation won't propagate
-        // between the replica that bumped TokenVersion and the replica that validates tokens.
+        // Token-version store: Redis when configured, in-memory otherwise.
         var redisConn = configuration[$"{InfrastructureOptions.SectionName}:Redis:ConnectionString"];
         if (!string.IsNullOrWhiteSpace(redisConn))
         {
@@ -74,20 +108,8 @@ public static class DependencyInjection
             services.AddSingleton<ITokenVersionStore, InMemoryTokenVersionStore>();
         }
 
-        services.AddScoped<IUserLookup, EfUserLookup>();
-        services.AddScoped<IUserRegistrar, EfUserRegistrar>();
-        services.AddScoped<IUserActivityRecorder, EfUserActivityRecorder>();
-        services.AddScoped<IPasswordChanger, EfPasswordChanger>();
-        services.AddScoped<IRefreshTokenStore, PostgresRefreshTokenStore>();
-
-        // --- Application abstractions that Infrastructure fills ---
-        // A HeadlessRequestContext is registered as a last-resort fallback for
-        // background workers + integration tests. The Server host overrides
-        // this registration with an HttpContext-backed implementation.
+        // Headless fallback for IRequestContext — Server + Api override with an HttpContext-backed impl.
         services.AddScoped<IRequestContext, HeadlessRequestContext>();
-
-        // --- Background workers ---
-        services.AddHostedService<TokenRetentionWorker>();
 
         return services;
     }
@@ -101,10 +123,9 @@ public static class DependencyInjection
 }
 
 /// <summary>
-/// Fallback <see cref="IRequestContext"/> used when no HTTP request is in
-/// flight (background workers, seeder, integration tests). Every field is
-/// deliberately null — a real request wires <c>HttpContextRequestContext</c>
-/// in Phase 4.
+/// Fallback <see cref="IRequestContext"/> for background workers, seeders,
+/// integration-test bootstraps. Live HTTP requests get an
+/// <c>HttpContextRequestContext</c> registered in the API host.
 /// </summary>
 internal sealed class HeadlessRequestContext : IRequestContext
 {

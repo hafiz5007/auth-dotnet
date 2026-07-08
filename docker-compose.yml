@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: auth-ref-postgres
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_USER: auth_ref
+      POSTGRES_PASSWORD: auth_ref_dev_password
+      POSTGRES_DB: auth_reference
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_ref -d auth_reference"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: auth-ref-redis
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: auth-ref-server
+    ports: ["5001:5001"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - AuthReference__Database__ConnectionString=Host=postgres;Port=5432;Database=auth_reference;Username=auth_ref;Password=auth_ref_dev_password
+      - AuthReference__Redis__ConnectionString=redis:6379
+      # Any 32+ byte string works; production loads from a secret store.
+      - AuthReference__Jwt__SigningKey=change-me-to-a-32-byte-secret-in-production!!
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: auth-ref-api
+    ports: ["5002:5002"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - AuthReference__Database__ConnectionString=Host=postgres;Port=5432;Database=auth_reference;Username=auth_ref;Password=auth_ref_dev_password
+      - AuthReference__Redis__ConnectionString=redis:6379
+      - AuthReference__Jwt__SigningKey=change-me-to-a-32-byte-secret-in-production!!
+
+volumes:
+  postgres_data:

@@ -1,0 +1,29 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY AuthReference.sln ./
+COPY src/AuthReference.Domain/AuthReference.Domain.csproj                          src/AuthReference.Domain/
+COPY src/AuthReference.Application/AuthReference.Application.csproj                src/AuthReference.Application/
+COPY src/AuthReference.Infrastructure/AuthReference.Infrastructure.csproj          src/AuthReference.Infrastructure/
+COPY src/AuthReference.Server/AuthReference.Server.csproj                          src/AuthReference.Server/
+COPY src/AuthReference.Api/AuthReference.Api.csproj                                src/AuthReference.Api/
+COPY tests/AuthReference.Application.Tests/AuthReference.Application.Tests.csproj  tests/AuthReference.Application.Tests/
+COPY tests/AuthReference.Api.Tests/AuthReference.Api.Tests.csproj                  tests/AuthReference.Api.Tests/
+RUN dotnet restore AuthReference.sln
+
+COPY . .
+RUN dotnet publish src/AuthReference.Api/AuthReference.Api.csproj \
+    -c Release -o /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /app/publish .
+USER app
+
+ENV ASPNETCORE_URLS=http://+:5002
+EXPOSE 5002
+
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget -qO- http://localhost:5002/health/live || exit 1
+
+ENTRYPOINT ["dotnet", "AuthReference.Api.dll"]

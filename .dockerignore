@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/*.user
+**/appsettings.Local.json
+.git
+.github
+*.md
+docs
+tests
