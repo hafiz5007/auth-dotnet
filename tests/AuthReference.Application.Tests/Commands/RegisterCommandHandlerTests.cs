@@ -18,7 +18,7 @@ public class RegisterCommandHandlerTests
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 7, 6, 12, 0, 0, TimeSpan.Zero));
         var issuer = new FakeTokenIssuer(clock);
-        var store = new FakeRefreshTokenStore();
+        var store = new FakeRefreshTokenStore(clock);
         var bus = new CapturingPublisher();
         var registrar = new Mock<IUserRegistrar>();
 
@@ -52,7 +52,7 @@ public class RegisterCommandHandlerTests
                  .ReturnsAsync(RegisterOutcome.Failed("email already registered"));
 
         var handler = new RegisterCommandHandler(
-            registrar.Object, new FakeTokenIssuer(clock), new FakeRefreshTokenStore(),
+            registrar.Object, new FakeTokenIssuer(clock), new FakeRefreshTokenStore(clock),
             new CapturingPublisher(), clock, NullLogger<RegisterCommandHandler>.Instance);
 
         var act = () => handler.Handle(

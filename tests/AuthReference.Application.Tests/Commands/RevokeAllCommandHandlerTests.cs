@@ -15,7 +15,7 @@ public class RevokeAllCommandHandlerTests
     public async Task Revoke_KillsAllRefreshTokens_InvalidatesVersionCache_PublishesEvent()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 7, 6, 12, 0, 0, TimeSpan.Zero));
-        var store = new FakeRefreshTokenStore();
+        var store = new FakeRefreshTokenStore(clock);
         var versions = new FakeTokenVersionStore();
         var bus = new CapturingPublisher();
 

@@ -18,7 +18,7 @@ public class LoginCommandHandlerTests
         var users = new FakeUserLookup();
         var passwords = new FakePasswordAuthenticator();
         var issuer = new FakeTokenIssuer(clock);
-        var refreshTokens = new FakeRefreshTokenStore();
+        var refreshTokens = new FakeRefreshTokenStore(clock);
         var activity = new FakeUserActivityRecorder();
         var context = new FakeRequestContext();
 

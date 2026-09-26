@@ -4,7 +4,7 @@ A .NET 10 identity provider + resource server pair, built layer-by-layer with Cl
 
 **Status: Phase 5 of 5 — complete.**
 
-[![CI](https://github.com/hafiz5007/auth-reference-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/hafiz5007/auth-reference-dotnet/actions/workflows/ci.yml)
+[![CI](https://github.com/hafiz5007/auth-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/hafiz5007/auth-dotnet/actions/workflows/ci.yml)
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)
 ![Postgres](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)

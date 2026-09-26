@@ -78,16 +78,18 @@ public class ProtectedEndpointsTests : IClassFixture<ApiFactory>
     [Fact]
     public async Task ProfileMe_Returns401_WhenTokenVersionStaleVsDb()
     {
-        // Bump Alice's TokenVersion in the DB while her outstanding token still says tv=1.
+        // Bump Carol's TokenVersion in the DB while her outstanding token still says tv=1.
+        // Carol is used only here so the bump can't leak into the other tests, and
+        // a tracked update is used because the InMemory provider has no ExecuteUpdate.
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await db.Users
-                .Where(u => u.Id == ApiFactory.AliceId)
-                .ExecuteUpdateAsync(s => s.SetProperty(u => u.TokenVersion, 2));
+            var carol = await db.Users.SingleAsync(u => u.Id == ApiFactory.CarolId);
+            carol.TokenVersion = 2;
+            await db.SaveChangesAsync();
         }
 
-        var staleToken = TokenBuilder.Build(ApiFactory.AliceId, tokenVersion: 1, roles: new[] { "user" });
+        var staleToken = TokenBuilder.Build(ApiFactory.CarolId, tokenVersion: 1, roles: new[] { "user" });
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", staleToken);
 

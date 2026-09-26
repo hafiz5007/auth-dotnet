@@ -19,6 +19,10 @@ namespace AuthReference.Application.Commands.Refresh;
 ///   2. Active + never rotated → issue a new pair, mark the presented one replaced.
 ///   3. Already replaced   → REUSE. Someone else has been using the chain — revoke
 ///                          every token for the user and publish a security event.
+///   4. Revoked, not replaced (revoke-all, reuse fallout) → deny.
+///
+/// The store returns revoked rows on purpose (so case 3 can be detected), so the
+/// handler must check revocation itself.
 /// </summary>
 public sealed class RefreshCommandHandler : IRequestHandler<RefreshCommand, LoginResponse>
 {
@@ -71,6 +75,12 @@ public sealed class RefreshCommandHandler : IRequestHandler<RefreshCommand, Logi
                 presented.UserId, presented.Id, _requestContext.IpAddress, _requestContext.UserAgent, _clock.UtcNow)), ct);
 
             return LoginResponse.Denied(AuthDecision.TokenReused);
+        }
+
+        if (presented.RevokedAtUtc is not null)
+        {
+            _log.LogInformation("Refresh denied — token revoked for user {UserId}", presented.UserId);
+            return LoginResponse.Denied(AuthDecision.TokenExpired);
         }
 
         var user = await _users.FindByIdAsync(presented.UserId, ct);

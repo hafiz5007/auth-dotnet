@@ -7,6 +7,9 @@ public sealed class FakeRefreshTokenStore : IRefreshTokenStore
 {
     // Keyed by TokenHash for realistic lookup semantics.
     private readonly Dictionary<string, RefreshToken> _tokens = new();
+    private readonly IClock _clock;
+
+    public FakeRefreshTokenStore(IClock clock) => _clock = clock;
 
     public IReadOnlyDictionary<string, RefreshToken> All => _tokens;
 
@@ -19,8 +22,9 @@ public sealed class FakeRefreshTokenStore : IRefreshTokenStore
     public Task<RefreshToken?> FindActiveByHashAsync(string tokenHash, CancellationToken ct = default)
     {
         var token = _tokens.GetValueOrDefault(tokenHash);
-        // Match the real store's contract: return null when revoked / expired.
-        if (token is null || token.RevokedAtUtc is not null || token.ExpiresAtUtc <= DateTimeOffset.UtcNow)
+        // Match the real store's contract: null only when unknown / expired. Revoked
+        // and rotated rows are returned so the handler can drive reuse detection.
+        if (token is null || token.ExpiresAtUtc <= _clock.UtcNow)
             return Task.FromResult<RefreshToken?>(null);
         return Task.FromResult<RefreshToken?>(token);
     }
@@ -30,7 +34,7 @@ public sealed class FakeRefreshTokenStore : IRefreshTokenStore
         if (!_tokens.TryGetValue(presented.TokenHash, out var stored)) return Task.FromResult(false);
         if (stored.ReplacedById is not null) return Task.FromResult(false);
         stored.ReplacedById = replacement.Id;
-        stored.RevokedAtUtc = DateTimeOffset.UtcNow;
+        stored.RevokedAtUtc = _clock.UtcNow;
         stored.RevokeReason = "rotated";
         _tokens[replacement.TokenHash] = replacement;
         return Task.FromResult(true);
@@ -40,7 +44,7 @@ public sealed class FakeRefreshTokenStore : IRefreshTokenStore
     {
         foreach (var t in _tokens.Values.Where(t => t.UserId == userId && t.RevokedAtUtc is null))
         {
-            t.RevokedAtUtc = DateTimeOffset.UtcNow;
+            t.RevokedAtUtc = _clock.UtcNow;
             t.RevokeReason = reason;
         }
         return Task.CompletedTask;

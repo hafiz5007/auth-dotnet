@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using AuthReference.Domain.Services;
 using AuthReference.Infrastructure.Configuration;
@@ -75,7 +76,9 @@ internal static class TokenVersionCheck
         var principal = ctx.Principal;
         if (principal is null) return;
 
-        var sub = principal.FindFirst("sub")?.Value;
+        // JwtBearer maps inbound "sub" to ClaimTypes.NameIdentifier by default.
+        var sub = principal.FindFirst("sub")?.Value
+                  ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var tvClaim = principal.FindFirst("tv")?.Value;
 
         if (!Guid.TryParse(sub, out var userId) || !int.TryParse(tvClaim, out var tokenVersion))
