@@ -19,14 +19,22 @@
     </PackageReference>
 
     <!--
+      Pins the patched version of a transitive dependency of EF Core Design
+      (via Microsoft.Build.Tasks.Core), which otherwise resolves 9.0.0 with
+      GHSA-37gx-xxp4-5rgx / GHSA-w3x6-4m5h-cxqf. Design-time only; drop when
+      EF Core Design pulls a fixed version itself.
+    -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.12" PrivateAssets="all" />
+
+    <!--
       OpenIddict — Core is enough for Phase 3 (it registers the entity types
       and managers that the client seeder needs). Server + Validation packages
       arrive in Phase 4 alongside the Server host that wires the /connect/*
       endpoints. Splitting the phases this way keeps Infrastructure independent
       of ASP.NET Core hosting concerns.
     -->
-    <PackageReference Include="OpenIddict.Core" Version="5.7.2" />
-    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="5.7.2" />
+    <PackageReference Include="OpenIddict.Core" Version="5.8.0" />
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="5.8.0" />
 
     <!--
       JWT signing (JwtTokenIssuer) + bearer validation (JwtBearerConfiguration).

@@ -8,7 +8,7 @@ A .NET 10 identity provider + resource server pair, built layer-by-layer with Cl
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)
 ![Postgres](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
-![OpenIddict](https://img.shields.io/badge/OpenIddict-5.7-262626)
+![OpenIddict](https://img.shields.io/badge/OpenIddict-5.8-262626)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## What this is
